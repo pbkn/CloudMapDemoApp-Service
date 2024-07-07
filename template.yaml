@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CloudMapDemoApp-Service
+
+  Sample SAM Template for CloudMapDemoApp-Service
+
+Resources:
+  DemoAppNamespace:
+    Type: AWS::ServiceDiscovery::HttpNamespace
+    Properties:
+      Name: demoapp.local
+
+  DemoAppService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Description: Cloud Map service for the DemoApp API
+      Name: demoapp.local.hello.api
+      NamespaceId: !Ref DemoAppNamespace
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+
+  ApiGatewayRecord:
+    Type: AWS::ServiceDiscovery::Instance
+    Properties:
+      ServiceId: !Ref DemoAppService
+      InstanceAttributes:
+        AWS_INSTANCE_CNAME: !ImportValue
+          #'Fn::Sub': "demoapp-apigateway-${AWS::AccountId}" #endpointv1
+          'Fn::Sub': "demoapp-server2-${AWS::AccountId}" #endpointv2
+        AWS_INSTANCE_PORT: 443
+
+Outputs:
+  CloudMapServiceName:
+    Description: Name of the Cloud Map service
+    Value: !Ref DemoAppService
+  CloudMapNamespaceName:
+    Description: Name of the Cloud Map HTTP namespace
+    Value: !Ref DemoAppNamespace
+
